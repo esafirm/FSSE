@@ -1,72 +1,62 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
 
-class Conversation {}
+import 'package:fsse/src/engine/profile.dart';
 
-class Profile {}
+import 'conversation.dart';
+import 'items/base.dart';
+
+import 'package:flutter/services.dart' show rootBundle;
+
+import 'dart:developer' as developer;
 
 class EnginePackage {
   late Conversation conversation;
-  late Profile profile;
+  late Profile profiles;
+
+  EnginePackage.fromJsonFiles(dynamic profiles, dynamic conversation) {
+    this.conversation = Conversation.fromJson(conversation);
+    this.profiles = Profile.fromJson(profiles);
+  }
 }
 
 abstract class EngineLoader {
-  EnginePackage load();
+  Future<EnginePackage> load();
 }
 
 abstract class FsseEngine {
+  Future<ItemType> proceed();
+}
+
+/* Impl */
+/* ------------------------------------------ */
+
+class AssetEngineLoader extends EngineLoader {
+  @override
+  Future<EnginePackage> load() async {
+    String profileString = await rootBundle.loadString("assets/story/profiles.json");
+    String conversationString = await rootBundle.loadString("assets/story/index.json");
+
+    return EnginePackage.fromJsonFiles(jsonDecode(profileString), jsonDecode(conversationString));
+  }
+}
+
+class RealFsseEngine extends FsseEngine {
   late EngineLoader loader;
 
-  ItemType proceed();
-}
+  RealFsseEngine(this.loader);
 
-abstract class ItemType {
-  String type();
-}
+  late EnginePackage package;
 
-class InputResult {
-  String? variable;
-}
-
-class TextItemType extends ItemType {
-  static const _type = "TEXT";
-  late String text, profileId;
-
-  TextItemType({@required text, @required profileId});
-
-  TextItemType.fromJson(Map<String, dynamic> json) {
-    text = json["text"];
-    profileId = json["profileId"];
-  }
+  ItemType? currentItem;
 
   @override
-  String type() {
-    return _type;
+  Future<ItemType> proceed() async {
+    if (currentItem == null) {
+      package = await loader.load();
+
+      developer.log("Package loaded", name: "FSSE");
+    }
+
+    return package.conversation.conversations.first;
   }
-}
-
-class InputItemType extends ItemType {
-  static const _type = "INPUT";
-
-  late String text, variable;
-
-  InputItemType.fromJson(Map<String, dynamic> json) {
-    text = json["text"];
-    variable = json["variable"];
-  }
-
-  @override
-  String type() {
-    return _type;
-  }
-}
-
-class ChoiceItemType extends ItemType {
-  String? text;
-  String? variable;
-  String?
-  
-}
-
-void main() {
-  TextItemType(text: "Testing", profileId: "Profile ID");
 }

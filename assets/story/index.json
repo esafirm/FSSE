@@ -1,0 +1,36 @@
+{
+  "conversation_id": "cvn_qxfOhN",
+  "conversations": [
+    {
+      "type": "TEXT",
+      "text": "Hello, what is your name?",
+      "profile": "v2fWhy"
+    },
+    {
+      "type": "INPUT",
+      "text": "What is your name?",
+      "variable": "NAME"
+    },
+    {
+      "type": "TEXT",
+      "text": "Nice to e-meet you {{NAME}} 🙏",
+      "profile": "v2fWhy"
+    },
+    {
+      "type": "CHOICE",
+      "text": "Blue pill or red pill?",
+      "variable": "PILL",
+      "choices": [
+        {
+          "text": "Blue of course.",
+          "value": "Blue",
+          "target": "qxfOhN"
+        },
+        {
+          "text": "I like red",
+          "value": "Red"
+        }
+      ]
+    }
+  ]
+}

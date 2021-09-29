@@ -1,0 +1,34 @@
+{
+  "conversation_id": "cvn_qxfOhA",
+  "conversations": [
+    {
+      "type": "TEXT",
+      "text": "Ahh, I see, so you chose the **Blue** one",
+      "profile": "v2fWhy"
+    },
+    {
+      "type": "TEXT",
+      "text": "Do you know what it means?",
+      "profile": "v2fWhy"
+    },
+    {
+      "type": "CHOICE",
+      "choices": [
+        {
+          "text": "No."
+        },
+        {
+          "text": "I like red"
+        }
+      ]
+    },
+    {
+      "type": "TEXT",
+      "text": "Well, I'm gonna tell you anyway.."
+    },
+    {
+      "type": "TEXT",
+      "text": "It meant you'll die, in 30 minutes…"
+    }
+  ]
+}
