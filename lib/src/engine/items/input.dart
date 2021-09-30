@@ -13,7 +13,3 @@ class InputItemType extends ItemType {
   @override
   String getType() => type;
 }
-
-class InputResult {
-  String? variable;
-}

@@ -4,7 +4,7 @@ class ChoiceItemType extends ItemType {
   static const type = "CHOICE";
 
   late String text;
-  late String variable;
+  String? variable;
 
   late List<Choice> choices;
 

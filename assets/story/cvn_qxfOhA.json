@@ -7,11 +7,8 @@
       "profile": "v2fWhy"
     },
     {
-      "type": "TEXT",
       "text": "Do you know what it means?",
-      "profile": "v2fWhy"
-    },
-    {
+      "profile": "v2fWhy",
       "type": "CHOICE",
       "choices": [
         {
