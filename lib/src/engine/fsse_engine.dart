@@ -22,7 +22,6 @@ class EnginePackage {
 
 abstract class EngineLoader {
   Future<EnginePackage> initialLoad();
-
   Future<Conversation> loadConversation(String conversationId);
 }
 
@@ -116,6 +115,9 @@ class RealFsseEngine extends FsseEngine {
     final target = itemResult.target;
     if (target != null) {
       await loader.loadConversation(target);
+
+      // Change with thread-safe operation
+      dialogIndex = 0;
     }
   }
 

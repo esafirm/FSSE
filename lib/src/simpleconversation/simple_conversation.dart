@@ -18,6 +18,7 @@ class SimpleConversation extends StatefulWidget {
 
 class SimpleConversationState extends State<SimpleConversation> {
   FsseEngine? engine;
+  String? currentText;
 
   Widget buildItem(BuildContext context, String label, Function() onPressed) {
     return Expanded(
@@ -45,35 +46,49 @@ class SimpleConversationState extends State<SimpleConversation> {
     return null;
   }
 
+  Widget buildButtons(BuildContext context) {
+    return Row(
+      children: [
+        buildItem(context, "Proceed", () async {
+          engine ??= RealFsseEngine(AssetEngineLoader());
+
+          final itemResult = await getItemResult();
+          final nextItem = await engine?.next(prevResult: itemResult);
+
+          developer.log("Prev result is $itemResult");
+          developer.log("Next item is $nextItem");
+
+          setState(() {
+            currentText = nextItem?.getText();
+          });
+        }),
+        buildItem(context, "Print Data", () async {
+          final dataMap = engine?.getDataMap();
+
+          developer.log("Inspecting data map: ${jsonEncode(dataMap)}");
+          developer.inspect(dataMap);
+        }),
+
+      ],
+    );
+  }
+
   @override
   Widget build(BuildContext context) {
-    return (MaterialApp(
+    return MaterialApp(
       theme: ThemeData(),
       home: Scaffold(
         appBar: AppBar(
           title: const Text("FSSE Sample"),
           centerTitle: true,
         ),
-        body: Row(
+        body: Column(
           children: [
-            buildItem(context, "Proceed", () async {
-              engine ??= RealFsseEngine(AssetEngineLoader());
-
-              final itemResult = await getItemResult();
-              final nextItem = await engine?.next(prevResult: itemResult);
-
-              developer.log("Prev result is $itemResult");
-              developer.log("Next item is $nextItem");
-            }),
-            buildItem(context, "Print Data", () async {
-              final dataMap = engine?.getDataMap();
-
-              developer.log("Inspecting data map: ${jsonEncode(dataMap)}");
-              developer.inspect(dataMap);
-            })
+            buildButtons(context),
+            Text(currentText ?? "No item")
           ],
         ),
       ),
-    ));
+    );
   }
 }
