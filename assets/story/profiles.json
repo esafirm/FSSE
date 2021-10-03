@@ -1,0 +1,14 @@
+{
+  "profiles": [
+    {
+      "id": "123abc",
+      "name": "John",
+      "avatar": "https://sample.com/images/200/300.jpg"
+    },
+    {
+      "id": "123bbb",
+      "name": "Doe",
+      "avatar": "https://sample.com/images/200/300.jpg"
+    }
+  ]
+}

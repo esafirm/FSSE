@@ -1,72 +1,137 @@
-import 'package:flutter/material.dart';
+import 'dart:convert';
 
-class Conversation {}
+import 'package:fsse/src/engine/item_result.dart';
+import 'package:fsse/src/engine/profile.dart';
 
-class Profile {}
+import 'conversation.dart';
+import 'items/base.dart';
+
+import 'package:flutter/services.dart' show rootBundle;
+
+import 'dart:developer' as developer;
 
 class EnginePackage {
   late Conversation conversation;
-  late Profile profile;
+  late Profile profiles;
+
+  EnginePackage.fromJsonFiles(dynamic profiles, dynamic conversation) {
+    this.conversation = Conversation.fromJson(conversation);
+    this.profiles = Profile.fromJson(profiles);
+  }
 }
 
 abstract class EngineLoader {
-  EnginePackage load();
+  Future<EnginePackage> initialLoad();
+
+  Future<Conversation> loadConversation(String conversationId);
 }
 
 abstract class FsseEngine {
+  /// Proceed to next item. You can provide the previous result of item type
+  /// This result object can have a data that will be stored in data map
+  /// or will load next conversation
+  Future<ItemType> next({ItemResult? prevResult});
+
+  /// Get current item of item type.
+  Future<ItemType> get();
+
+  /// Get data map from engine container map
+  Map<String, dynamic> getDataMap();
+}
+
+/* Impl */
+/* ------------------------------------------ */
+
+class AssetEngineLoader extends EngineLoader {
+  static const String _assetDir = "assets/story";
+  static const String _prefixConversation = "cvn_";
+
+  @override
+  Future<EnginePackage> initialLoad() async {
+    String profileString = await rootBundle.loadString("$_assetDir/profiles.json");
+    String conversationString = await rootBundle.loadString("$_assetDir/index.json");
+
+    return EnginePackage.fromJsonFiles(jsonDecode(profileString), jsonDecode(conversationString));
+  }
+
+  @override
+  Future<Conversation> loadConversation(String conversationId) async {
+    String newConversation = await rootBundle.loadString("$_assetDir/$_prefixConversation$conversationId.json");
+    return Conversation.fromJson(jsonDecode(newConversation));
+  }
+}
+
+class RealFsseEngine extends FsseEngine {
+  static const _tag = "FSSE";
+
   late EngineLoader loader;
 
-  ItemType proceed();
-}
+  RealFsseEngine(this.loader);
 
-abstract class ItemType {
-  String type();
-}
+  late Profile profile;
 
-class InputResult {
-  String? variable;
-}
+  Conversation? currentConversation;
+  int dialogIndex = 0;
 
-class TextItemType extends ItemType {
-  static const _type = "TEXT";
-  late String text, profileId;
+  Map<String, String> dataMap = {};
 
-  TextItemType({@required text, @required profileId});
+  @override
+  Future<ItemType> next({ItemResult? prevResult}) async {
+    developer.log("Request next with index: $dialogIndex", name: _tag);
 
-  TextItemType.fromJson(Map<String, dynamic> json) {
-    text = json["text"];
-    profileId = json["profileId"];
+    await loadPackageIfNeeded();
+    handleResult(prevResult);
+
+    final result = await getCurrentItemType();
+    dialogIndex += 1;
+    return result;
   }
 
   @override
-  String type() {
-    return _type;
-  }
-}
-
-class InputItemType extends ItemType {
-  static const _type = "INPUT";
-
-  late String text, variable;
-
-  InputItemType.fromJson(Map<String, dynamic> json) {
-    text = json["text"];
-    variable = json["variable"];
+  Future<ItemType> get() async {
+    developer.log("Request get with index: $dialogIndex", name: _tag);
+    await loadPackageIfNeeded();
+    return getCurrentItemType();
   }
 
   @override
-  String type() {
-    return _type;
+  Map<String, dynamic> getDataMap() => dataMap;
+
+  Future<ItemType> getCurrentItemType() {
+    final newData = currentConversation!.conversations[dialogIndex].cloneWithData(dataMap);
+    return Future.value(newData);
   }
-}
 
-class ChoiceItemType extends ItemType {
-  String? text;
-  String? variable;
-  String?
-  
-}
+  void handleResult(ItemResult? itemResult) async {
+    if (itemResult == null) return;
 
-void main() {
-  TextItemType(text: "Testing", profileId: "Profile ID");
+    // Handle data map
+    if (itemResult.variable != null) {
+      if (itemResult.value == null) {
+        throw Exception("Variable exits but value is null");
+      }
+      dataMap[itemResult.variable!] = itemResult.value ?? "";
+    }
+
+    // Handle target
+    final target = itemResult.target;
+    if (target != null) {
+      await loader.loadConversation(target);
+
+      // Change with thread-safe operation
+      dialogIndex = 0;
+    }
+  }
+
+  Future<bool> loadPackageIfNeeded() async {
+    if (currentConversation == null) {
+      final package = await loader.initialLoad();
+      profile = package.profiles;
+      currentConversation = package.conversation;
+
+      developer.log("Package loaded", name: "FSSE");
+      return true;
+    }
+    return false;
+  }
 }
