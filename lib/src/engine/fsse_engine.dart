@@ -22,6 +22,7 @@ class EnginePackage {
 
 abstract class EngineLoader {
   Future<EnginePackage> initialLoad();
+
   Future<Conversation> loadConversation(String conversationId);
 }
 
@@ -72,7 +73,7 @@ class RealFsseEngine extends FsseEngine {
   Conversation? currentConversation;
   int dialogIndex = 0;
 
-  Map<String, dynamic> dataMap = {};
+  Map<String, String> dataMap = {};
 
   @override
   Future<ItemType> next({ItemResult? prevResult}) async {
@@ -97,7 +98,8 @@ class RealFsseEngine extends FsseEngine {
   Map<String, dynamic> getDataMap() => dataMap;
 
   Future<ItemType> getCurrentItemType() {
-    return Future.value(currentConversation!.conversations[dialogIndex]);
+    final newData = currentConversation!.conversations[dialogIndex].cloneWithData(dataMap);
+    return Future.value(newData);
   }
 
   void handleResult(ItemResult? itemResult) async {
@@ -108,7 +110,7 @@ class RealFsseEngine extends FsseEngine {
       if (itemResult.value == null) {
         throw Exception("Variable exits but value is null");
       }
-      dataMap[itemResult.variable!] = itemResult.value;
+      dataMap[itemResult.variable!] = itemResult.value ?? "";
     }
 
     // Handle target
