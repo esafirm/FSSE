@@ -1,4 +1,4 @@
-name: OkMock PR Checker
+name: FSSE PR Checker
 
 on:
   pull_request:
@@ -18,6 +18,4 @@ jobs:
           flutter-version: '2.0.5'
 
       - name: Check Flutter
-        run: |
-          flutter pub publish --dry-run
-          flutter test
+        run: flutter build apk
