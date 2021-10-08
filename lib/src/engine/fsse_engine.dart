@@ -1,10 +1,11 @@
 import 'dart:convert';
 
-import 'package:fsse/src/engine/item_result.dart';
-import 'package:fsse/src/engine/profile.dart';
+import 'package:fsse/src/engine/data/item_result.dart';
+import 'package:fsse/src/engine/data/profile.dart';
 
-import 'conversation.dart';
-import 'items/base.dart';
+import 'data/conversation.dart';
+import 'data/scene.dart';
+import 'data/items/base.dart';
 
 import 'package:flutter/services.dart' show rootBundle;
 
@@ -12,11 +13,11 @@ import 'dart:developer' as developer;
 
 class EnginePackage {
   late Conversation conversation;
-  late Profile profiles;
+  late ProfileData profiles;
 
   EnginePackage.fromJsonFiles(dynamic profiles, dynamic conversation) {
     this.conversation = Conversation.fromJson(conversation);
-    this.profiles = Profile.fromJson(profiles);
+    this.profiles = ProfileData.fromJson(profiles);
   }
 }
 
@@ -37,6 +38,13 @@ abstract class FsseEngine {
 
   /// Get data map from engine container map
   Map<String, dynamic> getDataMap();
+
+  /// Get profile for item type
+  Profile? getProfile(ItemType itemType);
+}
+
+abstract class EngineListener {
+  void onNewScene(Scene scene);
 }
 
 /* Impl */
@@ -65,10 +73,13 @@ class RealFsseEngine extends FsseEngine {
   static const _tag = "FSSE";
 
   late EngineLoader loader;
+  EngineListener? listener;
 
   RealFsseEngine(this.loader);
 
-  late Profile profile;
+  RealFsseEngine.withListener(this.loader, this.listener);
+
+  late ProfileData profileData;
 
   Conversation? currentConversation;
   int dialogIndex = 0;
@@ -79,10 +90,10 @@ class RealFsseEngine extends FsseEngine {
   Future<ItemType> next({ItemResult? prevResult}) async {
     developer.log("Request next with index: $dialogIndex", name: _tag);
 
-    await loadPackageIfNeeded();
-    handleResult(prevResult);
+    await _loadPackageIfNeeded();
+    _handleResult(prevResult);
 
-    final result = await getCurrentItemType();
+    final result = await _getCurrentItemType();
     dialogIndex += 1;
     return result;
   }
@@ -90,19 +101,41 @@ class RealFsseEngine extends FsseEngine {
   @override
   Future<ItemType> get() async {
     developer.log("Request get with index: $dialogIndex", name: _tag);
-    await loadPackageIfNeeded();
-    return getCurrentItemType();
+    await _loadPackageIfNeeded();
+    return _getCurrentItemType();
   }
 
   @override
   Map<String, dynamic> getDataMap() => dataMap;
 
-  Future<ItemType> getCurrentItemType() {
-    final newData = currentConversation!.conversations[dialogIndex].cloneWithData(dataMap);
+  @override
+  Profile? getProfile(ItemType itemType) {
+    final info = itemType.getProfileInfo();
+    if (info == null) {
+      return null;
+    }
+    try {
+      return profileData.profiles.firstWhere((element) => element.id == info.id);
+    } catch (e) {
+      return null;
+    }
+  }
+
+  Future<ItemType> _getCurrentItemType() {
+    final conversation = currentConversation;
+    if (conversation == null) {
+      return Future.error(Exception("Empty conversation. Are you already load the assets?"));
+    }
+
+    if (conversation.conversations.length - 1 >= dialogIndex) {
+      return Future.error(Exception("End of conversations"));
+    }
+
+    final newData = conversation.conversations[dialogIndex].cloneWithData(dataMap);
     return Future.value(newData);
   }
 
-  void handleResult(ItemResult? itemResult) async {
+  void _handleResult(ItemResult? itemResult) async {
     if (itemResult == null) return;
 
     // Handle data map
@@ -116,22 +149,31 @@ class RealFsseEngine extends FsseEngine {
     // Handle target
     final target = itemResult.target;
     if (target != null) {
-      await loader.loadConversation(target);
+      final conversation = await loader.loadConversation(target);
+      _onNewConversation(conversation);
 
       // Change with thread-safe operation
       dialogIndex = 0;
     }
   }
 
-  Future<bool> loadPackageIfNeeded() async {
+  Future<bool> _loadPackageIfNeeded() async {
     if (currentConversation == null) {
       final package = await loader.initialLoad();
-      profile = package.profiles;
-      currentConversation = package.conversation;
+      profileData = package.profiles;
+      final conversation = package.conversation;
+      _onNewConversation(conversation);
 
       developer.log("Package loaded", name: "FSSE");
       return true;
     }
     return false;
+  }
+
+  /// This is called after initial load
+  /// and after new conversation is loaded
+  void _onNewConversation(Conversation conversation) {
+    currentConversation = conversation;
+    listener?.onNewScene(conversation.scene);
   }
 }
