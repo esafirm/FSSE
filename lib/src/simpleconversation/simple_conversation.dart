@@ -21,6 +21,7 @@ class SimpleConversation extends StatefulWidget {
 
 class SimpleConversationState extends State<SimpleConversation> implements EngineListener {
   AudioCache audioPlayer = AudioCache();
+  LoaderConfig config = LoaderConfig(musicDir: "story/music");
 
   late FsseEngine engine;
   String? currentText;
@@ -29,7 +30,7 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
   String? backgroundImage;
 
   SimpleConversationState() {
-    engine = RealFsseEngine.withListener(AssetEngineLoader(), this);
+    engine = RealFsseEngine.withListener(AssetEngineLoader(config), this);
   }
 
   @override
@@ -37,10 +38,10 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
     developer.log("on new bg: ${scene.background}");
     developer.log("on new music: ${scene.music}");
 
-    audioPlayer.play(scene.music);
+    audioPlayer.play("${config.musicDir}/${scene.music}");
 
     setState(() {
-      backgroundImage = scene.background;
+      backgroundImage = "${config.bgDir}/${scene.background}";
     });
   }
 
@@ -85,7 +86,8 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
             currentText = nextItem.getText();
 
             if (profile != null) {
-              profileImage = profile.getSprite(nextItem.getProfileInfo()!);
+              final spriteName = profile.getSprite(nextItem.getProfileInfo()!);
+              profileImage = "${config.spritesDir}/$spriteName";
             }
           });
         }),

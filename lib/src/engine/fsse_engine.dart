@@ -47,24 +47,40 @@ abstract class EngineListener {
   void onNewScene(Scene scene);
 }
 
+class LoaderConfig {
+  late String storyDir;
+  late String musicDir;
+  late String spritesDir;
+  late String bgDir;
+
+  LoaderConfig(
+      {this.storyDir = "assets/story",
+      this.musicDir = "assets/story/music",
+      this.spritesDir = "assets/story/sprites",
+      this.bgDir = "assets/story/bg"});
+}
+
 /* Impl */
 /* ------------------------------------------ */
 
 class AssetEngineLoader extends EngineLoader {
-  static const String _assetDir = "assets/story";
+  late LoaderConfig config;
+
   static const String _prefixConversation = "cvn_";
+
+  AssetEngineLoader(this.config);
 
   @override
   Future<EnginePackage> initialLoad() async {
-    String profileString = await rootBundle.loadString("$_assetDir/profiles.json");
-    String conversationString = await rootBundle.loadString("$_assetDir/index.json");
+    String profileString = await rootBundle.loadString("${config.storyDir}/profiles.json");
+    String conversationString = await rootBundle.loadString("${config.storyDir}/index.json");
 
     return EnginePackage.fromJsonFiles(jsonDecode(profileString), jsonDecode(conversationString));
   }
 
   @override
   Future<Conversation> loadConversation(String conversationId) async {
-    String newConversation = await rootBundle.loadString("$_assetDir/$_prefixConversation$conversationId.json");
+    String newConversation = await rootBundle.loadString("${config.storyDir}/$_prefixConversation$conversationId.json");
     return Conversation.fromJson(jsonDecode(newConversation));
   }
 }
@@ -127,7 +143,7 @@ class RealFsseEngine extends FsseEngine {
       return Future.error(Exception("Empty conversation. Are you already load the assets?"));
     }
 
-    if (dialogIndex >= conversation.conversations.length - 1) {
+    if (dialogIndex >= conversation.conversations.length) {
       return Future.error(Exception("End of conversations"));
     }
 

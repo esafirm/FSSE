@@ -22,8 +22,7 @@ class Profile {
     avatar = json["avatar"];
 
     sprites = json["sprites"].map<String>((item) {
-      // Hardcoded for now
-      return "assets/story/sprites/$item";
+      return item.toString();
     }).toList();
   }
 
