@@ -6,6 +6,6 @@ class Scene {
     // Hardcoded for now.
     // TODO: find a way to make this configurable
     background = "assets/story/bg/${json["background"]}";
-    music = "assets/story/bg/${json["music"]}";
+    music = "story/music/${json["music"]}";
   }
 }

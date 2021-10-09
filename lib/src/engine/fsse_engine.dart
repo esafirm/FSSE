@@ -127,7 +127,7 @@ class RealFsseEngine extends FsseEngine {
       return Future.error(Exception("Empty conversation. Are you already load the assets?"));
     }
 
-    if (conversation.conversations.length - 1 >= dialogIndex) {
+    if (dialogIndex >= conversation.conversations.length - 1) {
       return Future.error(Exception("End of conversations"));
     }
 

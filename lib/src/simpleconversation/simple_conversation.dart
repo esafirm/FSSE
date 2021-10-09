@@ -10,6 +10,8 @@ import 'package:fsse/src/engine/data/items/choice.dart';
 import 'package:fsse/src/engine/data/items/input.dart';
 import 'package:fsse/src/engine/data/scene.dart';
 
+import 'package:audioplayers/audioplayers.dart';
+
 class SimpleConversation extends StatefulWidget {
   const SimpleConversation({Key? key}) : super(key: key);
 
@@ -18,6 +20,8 @@ class SimpleConversation extends StatefulWidget {
 }
 
 class SimpleConversationState extends State<SimpleConversation> implements EngineListener {
+  AudioCache audioPlayer = AudioCache();
+
   late FsseEngine engine;
   String? currentText;
 
@@ -30,7 +34,10 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
 
   @override
   void onNewScene(Scene scene) {
-    developer.log("on new scene: ${scene.background}");
+    developer.log("on new bg: ${scene.background}");
+    developer.log("on new music: ${scene.music}");
+
+    audioPlayer.play(scene.music);
 
     setState(() {
       backgroundImage = scene.background;
