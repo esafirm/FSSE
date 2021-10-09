@@ -1,14 +1,18 @@
 {
   "conversation_id": "cvn_qxfOhA",
+  "scene": {
+    "background": "bg_restaurant.png",
+    "music": "sunny.mp3"
+  },
   "conversations": [
     {
       "type": "TEXT",
       "text": "Ahh, I see, so you chose the **Blue** one",
-      "profile": "v2fWhy"
+      "profile": "123bbb:0"
     },
     {
       "text": "Do you know what it means?",
-      "profile": "v2fWhy",
+      "profile": "123bbb:0",
       "type": "CHOICE",
       "choices": [
         {
@@ -21,11 +25,13 @@
     },
     {
       "type": "TEXT",
-      "text": "Well, I'm gonna tell you anyway.."
+      "text": "Well, I'm gonna tell you anyway..",
+      "profile": "123bbb:1"
     },
     {
       "type": "TEXT",
-      "text": "It meant you'll die, in 30 minutes…"
+      "text": "It meant you'll die, in 30 minutes…",
+      "profile": "123bbb:2"
     }
   ]
 }
