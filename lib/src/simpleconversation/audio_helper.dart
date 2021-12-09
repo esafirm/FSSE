@@ -6,7 +6,6 @@ import 'package:audioplayers/audioplayers.dart';
 /// It automatically stop the last sound and it also
 /// react to [AppLifecycleState]
 class AudioHelper with WidgetsBindingObserver {
-
   AudioCache audioCache = AudioCache();
   AudioPlayer? audioPlayer;
 
@@ -20,7 +19,7 @@ class AudioHelper with WidgetsBindingObserver {
 
   void play(String audioFile) async {
     await audioPlayer?.stop();
-    audioPlayer = await audioCache.play(audioFile);
+    audioPlayer = await audioCache.loop(audioFile);
   }
 
   @override
