@@ -44,6 +44,7 @@ abstract class FsseEngine {
 }
 
 abstract class EngineListener {
+  /// Called when new scene (background and or music) is available
   void onNewScene(Scene scene);
 }
 

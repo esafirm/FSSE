@@ -10,7 +10,7 @@ import 'package:fsse/src/engine/data/items/choice.dart';
 import 'package:fsse/src/engine/data/items/input.dart';
 import 'package:fsse/src/engine/data/scene.dart';
 
-import 'package:audioplayers/audioplayers.dart';
+import 'package:fsse/src/simpleconversation/audio_helper.dart';
 
 class SimpleConversation extends StatefulWidget {
   const SimpleConversation({Key? key}) : super(key: key);
@@ -20,7 +20,7 @@ class SimpleConversation extends StatefulWidget {
 }
 
 class SimpleConversationState extends State<SimpleConversation> implements EngineListener {
-  AudioCache audioPlayer = AudioCache();
+  AudioHelper audioPlayer = AudioHelper();
   LoaderConfig config = LoaderConfig(musicDir: "story/music");
 
   late FsseEngine engine;
@@ -31,6 +31,18 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
 
   SimpleConversationState() {
     engine = RealFsseEngine.withListener(AssetEngineLoader(config), this);
+  }
+
+  @override
+  void initState() {
+    super.initState();
+    audioPlayer.addObserver();
+  }
+
+  @override
+  void dispose() {
+    super.dispose();
+    audioPlayer.removeObserver();
   }
 
   @override
@@ -109,8 +121,12 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
     developer.log("Return image content");
 
     return Container(
-        decoration: BoxDecoration(image: DecorationImage(image: AssetImage(backgroundImage!), fit: BoxFit.cover)),
-        child: Image.asset(profileImage!));
+      decoration: BoxDecoration(image: DecorationImage(image: AssetImage(backgroundImage!), fit: BoxFit.cover)),
+      child: Image.asset(
+        profileImage!,
+        fit: BoxFit.fitWidth,
+      ),
+    );
   }
 
   @override
