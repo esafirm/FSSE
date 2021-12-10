@@ -115,24 +115,44 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
     );
   }
 
+  void proceedToNextItem() async {
+    final itemResult = await getItemResult();
+    final nextItem = await engine.next(prevResult: itemResult);
+    final profile = engine.getProfile(nextItem);
+
+    developer.log("Prev result is $itemResult");
+    developer.log("Next item is $nextItem");
+
+    setState(() {
+      currentText = nextItem.getText();
+
+      if (profile != null) {
+        final spriteName = profile.getSprite(nextItem.getProfileInfo()!);
+        profileImage = "${config.spritesDir}/$spriteName";
+      }
+    });
+  }
+
   @override
   Widget build(BuildContext context) {
     final isPoiAvailable = backgroundImage != null || profileImage != null;
 
     final children = [
-      buildButtons(context),
       Expanded(
-        child: Stack(
-          children: [
-            isPoiAvailable ? Poi(backgroundImage!, profileImage!) : const SizedBox.shrink(),
-            Align(
-              alignment: Alignment.bottomCenter,
-              child: Padding(
-                padding: const EdgeInsets.all(16),
-                child: currentText != null ? DialogueBox(currentText!) : const SizedBox.shrink(),
+        child: InkWell(
+          onTap: proceedToNextItem,
+          child: Stack(
+            children: [
+              isPoiAvailable ? Poi(backgroundImage!, profileImage!) : const SizedBox.shrink(),
+              Align(
+                alignment: Alignment.bottomCenter,
+                child: Padding(
+                  padding: const EdgeInsets.all(16),
+                  child: currentText != null ? DialogueBox(currentText!) : const SizedBox.shrink(),
+                ),
               ),
-            ),
-          ],
+            ],
+          ),
         ),
       )
     ].whereType<Widget>().toList();
@@ -140,10 +160,6 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
     return MaterialApp(
       theme: ThemeData(),
       home: Scaffold(
-        appBar: AppBar(
-          title: const Text("FSSE Sample"),
-          centerTitle: true,
-        ),
         body: Column(
           children: children,
         ),
