@@ -13,14 +13,15 @@ class Poi extends StatelessWidget {
   Widget build(BuildContext context) {
     developer.log("Return image content");
 
-    return Expanded(
-      child: Stack(
-        fit: StackFit.expand,
-        children: [
-          Image.asset(_background, fit: BoxFit.fitWidth),
-          _actor == null ? const SizedBox.shrink() : Image.asset(_actor!, fit: BoxFit.contain),
-        ],
-      ),
+    return Stack(
+      fit: StackFit.expand,
+      children: [
+        Image.asset(_background, fit: BoxFit.fitWidth),
+        Padding(
+          padding: const EdgeInsets.only(top: 32),
+          child: _actor == null ? const SizedBox.shrink() : Image.asset(_actor!, fit: BoxFit.fitHeight),
+        ),
+      ],
     );
   }
 }
