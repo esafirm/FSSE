@@ -9,10 +9,12 @@ import 'package:fsse/src/engine/data/item_result.dart';
 import 'package:fsse/src/engine/data/items/choice.dart';
 import 'package:fsse/src/engine/data/items/input.dart';
 import 'package:fsse/src/engine/data/scene.dart';
+import 'package:fsse/src/engine/state_saver.dart';
 
 import 'package:fsse/src/simpleconversation/audio_helper.dart';
 import 'package:fsse/src/simpleconversation/dialogue_box.dart';
-import 'package:fsse/src/simpleconversation/poi.dart';
+import 'package:fsse/src/simpleconversation/scene.dart';
+import 'package:fsse/src/simpleconversation/simple_menu.dart';
 
 class SimpleConversation extends StatefulWidget {
   const SimpleConversation({Key? key}) : super(key: key);
@@ -30,9 +32,10 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
 
   String? profileImage;
   String? backgroundImage;
+  bool _viewMode = false;
 
   SimpleConversationState() {
-    engine = RealFsseEngine.withListener(AssetEngineLoader(config), this);
+    engine = RealFsseEngine(AssetEngineLoader(config), SharedPrefCeritaStateSaver(), this);
   }
 
   @override
@@ -143,8 +146,19 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
           onTap: proceedToNextItem,
           child: Stack(
             children: [
-              isPoiAvailable ? Poi(backgroundImage!, profileImage!) : const SizedBox.shrink(),
+              isPoiAvailable ? SceneWidget(backgroundImage!, profileImage!) : const SizedBox.shrink(),
               Align(
+                alignment: Alignment.topRight,
+                child: Padding(
+                  padding: const EdgeInsets.only(right: 8, top: 64),
+                  child: InGameMenu(onSaveTap: () {
+                    engine.save();
+                  }),
+                ),
+              ),
+              _viewMode
+                  ? const SizedBox.shrink()
+                  : Align(
                 alignment: Alignment.bottomCenter,
                 child: Padding(
                   padding: const EdgeInsets.all(16),
@@ -155,7 +169,7 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
           ),
         ),
       )
-    ].whereType<Widget>().toList();
+    ];
 
     return MaterialApp(
       theme: ThemeData(),

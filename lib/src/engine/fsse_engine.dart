@@ -2,6 +2,7 @@ import 'dart:convert';
 
 import 'package:fsse/src/engine/data/item_result.dart';
 import 'package:fsse/src/engine/data/profile.dart';
+import 'package:fsse/src/engine/state_saver.dart';
 
 import 'data/conversation.dart';
 import 'data/scene.dart';
@@ -11,18 +12,10 @@ import 'package:flutter/services.dart' show rootBundle;
 
 import 'dart:developer' as developer;
 
-class EnginePackage {
-  late Conversation conversation;
-  late ProfileData profiles;
-
-  EnginePackage.fromJsonFiles(dynamic profiles, dynamic conversation) {
-    this.conversation = Conversation.fromJson(conversation);
-    this.profiles = ProfileData.fromJson(profiles);
-  }
-}
-
 abstract class EngineLoader {
-  Future<EnginePackage> initialLoad();
+  Future<ProfileData> loadProfile();
+
+  Future<Conversation> loadInitialConversation();
 
   Future<Conversation> loadConversation(String conversationId);
 }
@@ -41,6 +34,8 @@ abstract class FsseEngine {
 
   /// Get profile for item type
   Profile? getProfile(ItemType itemType);
+
+  void save();
 }
 
 abstract class EngineListener {
@@ -67,22 +62,24 @@ class LoaderConfig {
 class AssetEngineLoader extends EngineLoader {
   late LoaderConfig config;
 
-  static const String _prefixConversation = "cvn_";
-
   AssetEngineLoader(this.config);
 
   @override
-  Future<EnginePackage> initialLoad() async {
-    String profileString = await rootBundle.loadString("${config.storyDir}/profiles.json");
-    String conversationString = await rootBundle.loadString("${config.storyDir}/index.json");
-
-    return EnginePackage.fromJsonFiles(jsonDecode(profileString), jsonDecode(conversationString));
+  Future<Conversation> loadConversation(String conversationId) async {
+    String newConversation = await rootBundle.loadString("${config.storyDir}/$conversationId.json");
+    return Conversation.fromJson(jsonDecode(newConversation));
   }
 
   @override
-  Future<Conversation> loadConversation(String conversationId) async {
-    String newConversation = await rootBundle.loadString("${config.storyDir}/$_prefixConversation$conversationId.json");
-    return Conversation.fromJson(jsonDecode(newConversation));
+  Future<Conversation> loadInitialConversation() async {
+    String conversationString = await rootBundle.loadString("${config.storyDir}/index.json");
+    return Conversation.fromJson(jsonDecode(conversationString));
+  }
+
+  @override
+  Future<ProfileData> loadProfile() async {
+    String profileString = await rootBundle.loadString("${config.storyDir}/profiles.json");
+    return ProfileData.fromJson(jsonDecode(profileString));
   }
 }
 
@@ -90,11 +87,10 @@ class RealFsseEngine extends FsseEngine {
   static const _tag = "FSSE";
 
   late EngineLoader loader;
+  late CeritaStateSaver stateSaver;
   EngineListener? listener;
 
-  RealFsseEngine(this.loader);
-
-  RealFsseEngine.withListener(this.loader, this.listener);
+  RealFsseEngine(this.loader, this.stateSaver, this.listener);
 
   late ProfileData profileData;
 
@@ -176,12 +172,27 @@ class RealFsseEngine extends FsseEngine {
 
   Future<bool> _loadPackageIfNeeded() async {
     if (currentConversation == null) {
-      final package = await loader.initialLoad();
-      profileData = package.profiles;
-      final conversation = package.conversation;
+      final lastState = await stateSaver.loadState();
+
+      developer.log("last state is ${jsonEncode(lastState)}", name: _tag);
+
+      Conversation conversation;
+      try {
+        conversation = lastState == EmptyState
+            ? await loader.loadInitialConversation()
+            : await loader.loadConversation(lastState.conversationId);
+        dialogIndex = lastState.dialogIndex;
+      } catch (e) {
+        // fallback to index conversation because index conversation naming issue
+        conversation = await loader.loadInitialConversation();
+      }
+
+      developer.log("Resume from conversation id: $conversation", name: _tag);
+
+      profileData = await loader.loadProfile();
       _onNewConversation(conversation);
 
-      developer.log("Package loaded", name: "FSSE");
+      developer.log("Package loaded", name: _tag);
       return true;
     }
     return false;
@@ -192,5 +203,17 @@ class RealFsseEngine extends FsseEngine {
   void _onNewConversation(Conversation conversation) {
     currentConversation = conversation;
     listener?.onNewScene(conversation.scene);
+  }
+
+  @override
+  void save() {
+    final conversationId = currentConversation?.conversationId;
+    if (conversationId == null) {
+      developer.log("State is not saved", name: _tag);
+      return;
+    }
+
+    stateSaver.saveState(CeritaState(conversationId, dialogIndex));
+    developer.log("State saved. Conversation: ${currentConversation?.conversationId ?? "null"}", name: _tag);
   }
 }

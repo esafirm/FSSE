@@ -1,5 +1,6 @@
 {
   "conversation_id": "cvn_qxfOhN",
+  "is_index": true,
   "scene": {
     "background": "bg_sitting_room.png",
     "music": "sunny.mp3"
@@ -29,7 +30,7 @@
         {
           "text": "Blue of course.",
           "value": "Blue",
-          "target": "qxfOhA"
+          "target": "cvn_qxfOhA"
         },
         {
           "text": "I like red",
