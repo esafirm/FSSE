@@ -181,7 +181,6 @@ class RealFsseEngine extends FsseEngine {
         conversation = lastState == EmptyState
             ? await loader.loadInitialConversation()
             : await loader.loadConversation(lastState.conversationId);
-        dialogIndex = lastState.dialogIndex;
       } catch (e) {
         // fallback to index conversation because index conversation naming issue
         conversation = await loader.loadInitialConversation();

@@ -2,10 +2,6 @@ import 'package:flutter/foundation.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/widgets.dart';
 
-import 'package:animated_text_kit/animated_text_kit.dart';
-
-import 'dart:developer' as developer;
-
 class DialogueBox extends StatelessWidget {
   final String _text;
 

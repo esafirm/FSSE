@@ -3,8 +3,6 @@ import 'dart:convert';
 import 'package:flutter/material.dart';
 import 'package:fsse/src/engine/fsse_engine.dart';
 
-import 'dart:developer' as developer;
-
 import 'package:fsse/src/engine/data/item_result.dart';
 import 'package:fsse/src/engine/data/items/choice.dart';
 import 'package:fsse/src/engine/data/items/input.dart';
@@ -12,10 +10,11 @@ import 'package:fsse/src/engine/data/scene.dart';
 import 'package:fsse/src/engine/state_saver.dart';
 
 import 'package:fsse/src/simpleconversation/audio_helper.dart';
-import 'package:fsse/src/simpleconversation/dialogue_box.dart';
-import 'package:fsse/src/simpleconversation/scene.dart';
-import 'package:fsse/src/simpleconversation/simple_menu.dart';
+import 'package:fsse/src/simpleconversation/widgets/dialogue_box.dart';
+import 'package:fsse/src/simpleconversation/widgets/scene.dart';
+import 'package:fsse/src/simpleconversation/widgets/simple_menu.dart';
 import 'package:fsse/src/simpleconversation/widgets/toggle_visibility.dart';
+import 'package:fsse/src/utils/logger.dart';
 
 class SimpleConversation extends StatefulWidget {
   const SimpleConversation({Key? key}) : super(key: key);
@@ -25,6 +24,9 @@ class SimpleConversation extends StatefulWidget {
 }
 
 class SimpleConversationState extends State<SimpleConversation> implements EngineListener {
+
+  Logger logger = Logger("SimpleConversation");
+
   AudioHelper audioPlayer = AudioHelper();
   LoaderConfig config = LoaderConfig(musicDir: "story/music");
 
@@ -33,7 +35,7 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
 
   String? profileImage;
   String? backgroundImage;
-  bool _viewMode = false;
+  bool _hideUis = true;
 
   SimpleConversationState() {
     engine = RealFsseEngine(AssetEngineLoader(config), SharedPrefCeritaStateSaver(), this);
@@ -53,8 +55,8 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
 
   @override
   void onNewScene(Scene scene) {
-    developer.log("on new bg: ${scene.background}");
-    developer.log("on new music: ${scene.music}");
+    logger.log("on new bg: ${scene.background}");
+    logger.log("on new music: ${scene.music}");
 
     audioPlayer.play("${config.musicDir}/${scene.music}");
 
@@ -77,7 +79,7 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
 
   Future<ItemResult?> getItemResult() async {
     final item = await engine.get();
-    developer.log("Current item $item");
+    logger.log("Current item $item");
 
     if (item is InputItemType) {
       return ItemResult.input(item.variable, "TikTok");
@@ -89,43 +91,13 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
     return null;
   }
 
-  Widget buildButtons(BuildContext context) {
-    return Row(
-      children: [
-        buildItem(context, "Proceed", () async {
-          final itemResult = await getItemResult();
-          final nextItem = await engine.next(prevResult: itemResult);
-          final profile = engine.getProfile(nextItem);
-
-          developer.log("Prev result is $itemResult");
-          developer.log("Next item is $nextItem");
-
-          setState(() {
-            currentText = nextItem.getText();
-
-            if (profile != null) {
-              final spriteName = profile.getSprite(nextItem.getProfileInfo()!);
-              profileImage = "${config.spritesDir}/$spriteName";
-            }
-          });
-        }),
-        buildItem(context, "Print Data", () async {
-          final dataMap = engine.getDataMap();
-
-          developer.log("Inspecting data map: ${jsonEncode(dataMap)}");
-          developer.inspect(dataMap);
-        }),
-      ],
-    );
-  }
-
   void proceedToNextItem() async {
     final itemResult = await getItemResult();
     final nextItem = await engine.next(prevResult: itemResult);
     final profile = engine.getProfile(nextItem);
 
-    developer.log("Prev result is $itemResult");
-    developer.log("Next item is $nextItem");
+    logger.log("Prev result is $itemResult");
+    logger.log("Next item is $nextItem");
 
     setState(() {
       currentText = nextItem.getText();
@@ -144,18 +116,18 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
     return MaterialApp(
       theme: ThemeData(),
       home: Scaffold(
-        body: GestureDetector(
+        body: InkWell(
           onTap: proceedToNextItem,
           onLongPress: () {
             setState(() {
-              _viewMode = !_viewMode;
+              _hideUis = !_hideUis;
             });
           },
           child: Stack(
             children: [
               isPoiAvailable ? SceneWidget(backgroundImage!, profileImage!) : const SizedBox.shrink(),
               ToggleVisibility(
-                  isVisible: _viewMode,
+                  isVisible: _hideUis,
                   child: Align(
                     alignment: Alignment.topRight,
                     child: Padding(
@@ -166,7 +138,7 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
                     ),
                   )),
               ToggleVisibility(
-                isVisible: _viewMode,
+                isVisible: _hideUis,
                 child: Align(
                     alignment: Alignment.bottomCenter,
                     child: Padding(
