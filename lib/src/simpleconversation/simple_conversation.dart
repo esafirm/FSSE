@@ -15,6 +15,7 @@ import 'package:fsse/src/simpleconversation/audio_helper.dart';
 import 'package:fsse/src/simpleconversation/dialogue_box.dart';
 import 'package:fsse/src/simpleconversation/scene.dart';
 import 'package:fsse/src/simpleconversation/simple_menu.dart';
+import 'package:fsse/src/simpleconversation/widgets/toggle_visibility.dart';
 
 class SimpleConversation extends StatefulWidget {
   const SimpleConversation({Key? key}) : super(key: key);
@@ -140,42 +141,41 @@ class SimpleConversationState extends State<SimpleConversation> implements Engin
   Widget build(BuildContext context) {
     final isPoiAvailable = backgroundImage != null || profileImage != null;
 
-    final children = [
-      Expanded(
-        child: InkWell(
-          onTap: proceedToNextItem,
-          child: Stack(
-            children: [
-              isPoiAvailable ? SceneWidget(backgroundImage!, profileImage!) : const SizedBox.shrink(),
-              Align(
-                alignment: Alignment.topRight,
-                child: Padding(
-                  padding: const EdgeInsets.only(right: 8, top: 64),
-                  child: InGameMenu(onSaveTap: () {
-                    engine.save();
-                  }),
-                ),
-              ),
-              _viewMode
-                  ? const SizedBox.shrink()
-                  : Align(
-                alignment: Alignment.bottomCenter,
-                child: Padding(
-                  padding: const EdgeInsets.all(16),
-                  child: currentText != null ? DialogueBox(currentText!) : const SizedBox.shrink(),
-                ),
-              ),
-            ],
-          ),
-        ),
-      )
-    ];
-
     return MaterialApp(
       theme: ThemeData(),
       home: Scaffold(
-        body: Column(
-          children: children,
+        body: GestureDetector(
+          onTap: proceedToNextItem,
+          onLongPress: () {
+            setState(() {
+              _viewMode = !_viewMode;
+            });
+          },
+          child: Stack(
+            children: [
+              isPoiAvailable ? SceneWidget(backgroundImage!, profileImage!) : const SizedBox.shrink(),
+              ToggleVisibility(
+                  isVisible: _viewMode,
+                  child: Align(
+                    alignment: Alignment.topRight,
+                    child: Padding(
+                      padding: const EdgeInsets.only(right: 8, top: 64),
+                      child: InGameMenu(onSaveTap: () {
+                        engine.save();
+                      }),
+                    ),
+                  )),
+              ToggleVisibility(
+                isVisible: _viewMode,
+                child: Align(
+                    alignment: Alignment.bottomCenter,
+                    child: Padding(
+                      padding: const EdgeInsets.all(16),
+                      child: currentText != null ? DialogueBox(currentText!) : const SizedBox.shrink(),
+                    )),
+              ),
+            ],
+          ),
         ),
       ),
     );
