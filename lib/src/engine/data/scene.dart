@@ -6,4 +6,6 @@ class Scene {
     background = json["background"];
     music = json["music"];
   }
+
+  Scene({required this.background, required this.music});
 }
