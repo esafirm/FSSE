@@ -62,7 +62,7 @@ class GameController extends StateNotifier<GameState> implements EngineListener 
         currentItemType: state.currentItemType,
         currentProfile: state.currentProfile,
         currentScene:
-        Scene(music: "${config.musicDir}/${scene.music}", background: "${config.bgDir}/${scene.background}"));
+            Scene(music: "${config.musicDir}/${scene.music}", background: "${config.bgDir}/${scene.background}"));
 
     audioPlayer.play(state.currentScene!.music);
   }
@@ -82,7 +82,12 @@ class GameController extends StateNotifier<GameState> implements EngineListener 
   }
 
   void toggleHideUi() {
-    state = GameState(hideUis: !state.hideUis);
+    state = GameState(
+      currentProfile: state.currentProfile,
+      currentItemType: state.currentItemType,
+      currentScene: state.currentScene,
+      hideUis: !state.hideUis,
+    );
   }
 
   Future<ItemResult?> _getItemResult() async {
